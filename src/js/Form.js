@@ -366,6 +366,7 @@ define( function( require, exports, module ) {
                 $main.swipe( {
                     allowPageScroll: 'vertical',
                     threshold: 150,
+                    preventDefaultEvents: false,
                     swipeLeft: function() {
                         that.next();
                     },
