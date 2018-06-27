@@ -330,7 +330,7 @@ define( function( require, exports, module ) {
                         this.setButtonHandlers();
                         this.setRepeatHandlers();
                         this.setBranchHandlers();
-                        this.setSwipeHandlers();
+                        //this.setSwipeHandlers();
                         this.active = true;
                         this.flipToFirst();
                     } else {
