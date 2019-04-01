@@ -24,9 +24,11 @@
         "email": "martijn@enketo.org",
         "url": "https://www.linkedin.com/in/martijnvanderijdt"
     },
-    "contributors": [ {
-        "name": "Alex Anderson"
-    } ],
+    "contributors": [
+        {
+            "name": "Alex Anderson"
+        }
+    ],
     "bugs": "https://github.com/enketo/enketo-core/issues",
     "main": "src/js/form.js",
     "scripts": {
@@ -69,13 +71,14 @@
         "enketo/widgets": "./src/js/widgets.js",
         "enketo/translator": "./src/js/fake-translator",
         "enketo/dialog": "./src/js/fake-dialog",
-        "enketo/file-manager": "./src/js/file-manager"
+        "enketo/file-manager": "./src/js/file-manager",
+        "extended-xpath": "./node_modules/openrosa-xpath-evaluator/src/extended-xpath.js",
+        "openrosa-xpath-extensions": "./node_modules/openrosa-xpath-evaluator/src/openrosa-xpath-extensions.js"
     },
     "dependencies": {
         "@babel/polyfill": "^7.2.5",
         "bootstrap-datepicker": "1.8.x",
         "core-js": "^2.6.2",
-        "enketo-xpathjs": "1.9.0",
         "html5sortable": "^0.9.8",
         "jquery": "3.3.x",
         "jquery-touchswipe": "^1.6.19",
@@ -83,6 +86,8 @@
         "leaflet-draw": "github:enketo/Leaflet.draw#ff73078",
         "leaflet.gridlayer.googlemutant": "0.8.x",
         "mergexml": "1.1.2",
+        "moment": "^2.24.0",
+        "openrosa-xpath-evaluator": "^1.5.0",
         "signature_pad": "2.3.x"
     }
 }

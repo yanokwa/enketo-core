@@ -1,43 +1,46 @@
-import XPathJS from 'enketo-xpathjs';
+import moment from 'moment';
+import ExtendedXpathEvaluator from 'extended-xpath';
+import openrosaExtensions from 'openrosa-xpath-extensions';
 
-export default function( addExtensions ) {
-    const evaluator = new XPathJS.XPathEvaluator();
-
-    /*
-     * Note: it's inefficient to extend XPathJS here (for every model instance)
-     * instead of just once in the prototype.
-     * 
-     * However, this is done to prevent breaking Medic Mobile.
-     * The performance impact is probably negligible, since we don't instantiate
-     * models very often.
-     * 
-     * In any case, you don't have to use it like this. It was done for 
-     * Enketo Validate only. In an app that doesn't override enketo-xpathjs, 
-     * I'd recommend using `require('extension')(require('enketo-xpathjs'))` instead
-     * and leave the addExtensions parameter empty here.
-     */
-    if ( typeof addExtensions === 'function' ) {
-        addExtensions( XPathJS );
+const translate = ( key ) => {
+    if ( key.indexOf( 'date.dayofweek.' ) === 0 ) {
+        return moment().weekday( key.substring( 15 ) ).format( 'ddd' );
+    }
+    if ( key.indexOf( 'date.month.' ) === 0 ) {
+        return moment().month( parseInt( key.substring( 11 ) ) - 1 ).format( 'MMM' );
     }
 
-    XPathJS.bindDomLevel3XPath( this.xml, {
-        'window': {
-            JsXPathException: true,
-            JsXPathExpression: true,
-            JsXPathNSResolver: true,
-            JsXPathResult: true,
-            JsXPathNamespace: true
-        },
-        'document': {
-            jsCreateExpression( ...args ) {
-                return evaluator.createExpression( ...args );
-            },
-            jsCreateNSResolver( ...args ) {
-                return evaluator.createNSResolver( ...args );
-            },
-            jsEvaluate( ...args ) {
-                return evaluator.evaluate( ...args );
-            }
-        }
-    } );
+    return key;
+};
+
+export default function( translator ) {
+    // re-implement XPathJS ourselves!
+    var evaluator = new XPathEvaluator();
+
+    this.xml.jsCreateExpression = function() {
+        return evaluator.createExpression.apply( evaluator, arguments );
+    };
+    this.xml.jsCreateNSResolver = function() {
+        return evaluator.createNSResolver.apply( evaluator, arguments );
+    };
+    this.xml.jsEvaluate = function( e, contextPath, namespaceResolver, resultType, result ) {
+        var extensions = openrosaExtensions( translator || translate );
+        var wrappedXpathEvaluator = function( v ) {
+            // Node requests (i.e. result types greater than 3 (BOOLEAN)
+            // should be processed unaltered, as they are passed this
+            // way from the ExtendedXpathEvaluator.  For anything else,
+            // we will be ask for the most appropriate result type, and
+            // handle as best we can.
+            var wrappedResultType = resultType > XPathResult.BOOLEAN_TYPE ? resultType : XPathResult.ANY_TYPE;
+            var doc = contextPath.ownerDocument;
+            return doc.evaluate( v, contextPath, namespaceResolver, wrappedResultType, result );
+        };
+        var evaluator = new ExtendedXpathEvaluator( wrappedXpathEvaluator, extensions );
+        return evaluator.evaluate( e, contextPath, namespaceResolver, resultType, result );
+    };
+    window.JsXPathException =
+        window.JsXPathExpression =
+        window.JsXPathNSResolver =
+        window.JsXPathResult =
+        window.JsXPathNamespace = true;
 }
