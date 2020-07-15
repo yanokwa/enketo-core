@@ -174,19 +174,21 @@ const types = {
          */
         convert( x ) {
             let date = 'Invalid Date';
+            console.log( 'original date', x );
             const parts = x.split( 'T' );
             if ( isNumber( x ) ) {
                 // The XPath expression "2012-01-01T01:02:03+01:00" + 2 returns a number of days in XPath.
                 date = new Date( x * 24 * 60 * 60 * 1000 );
             } else if ( /[0-9]T[0-9]/.test( x ) && parts.length === 2 ) {
                 const convertedDate = types.date.convert( parts[ 0 ] );
+                console.log( 'converted date', convertedDate );
                 // The milliseconds are optional for datetime (and shouldn't be added)
                 const convertedTime = types.time.convert( parts[ 1 ], false );
+                console.log( 'converted time', convertedTime );
                 if ( convertedDate && convertedTime ) {
                     return `${convertedDate}T${convertedTime}`;
                 }
             } else {
-                console.log( 'original date', x );
                 const convertedDate = types.date.convert( parts[ 0 ] );
                 console.log( 'converted date', convertedDate );
                 if ( convertedDate ) {
