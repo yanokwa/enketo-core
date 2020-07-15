@@ -186,7 +186,9 @@ const types = {
                     return `${convertedDate}T${convertedTime}`;
                 }
             } else {
+                console.log( 'original date', x );
                 const convertedDate = types.date.convert( parts[ 0 ] );
+                console.log( 'converted date', convertedDate );
                 if ( convertedDate ) {
                     return `${convertedDate}T00:00:00.000${( new Date() ).getTimezoneOffsetAsTime()}`;
                 }
