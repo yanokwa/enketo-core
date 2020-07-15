@@ -476,7 +476,7 @@ describe( 'XPath Evaluator (see github.com/enketo/enketo-xpathjs for comprehensi
 } );
 
 // This test makes sure that whatever date strings are returned by the XPath evaluator can be dealt with by the form engine
-describe( 'dates returned by the XPath evaluator ', () => {
+fdescribe( 'dates returned by the XPath evaluator ', () => {
     const model = new Model( '<model><instance><data><meta><instanceID/></meta></data></instance></model>' );
     model.init();
     [
