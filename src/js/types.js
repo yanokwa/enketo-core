@@ -134,6 +134,7 @@ const types = {
          * @return {string} converted value
          */
         convert( x ) {
+            console.log( 'original date', x );
             if ( isNumber( x ) ) {
                 // The XPath expression "2012-01-01" + 2 returns a number of days in XPath.
                 const date = new Date( x * 24 * 60 * 60 * 1000 );
@@ -174,7 +175,7 @@ const types = {
          */
         convert( x ) {
             let date = 'Invalid Date';
-            console.log( 'original date', x );
+            console.log( 'original datetime', x );
             const parts = x.split( 'T' );
             if ( isNumber( x ) ) {
                 // The XPath expression "2012-01-01T01:02:03+01:00" + 2 returns a number of days in XPath.
