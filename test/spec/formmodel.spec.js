@@ -490,7 +490,7 @@ describe( 'dates returned by the XPath evaluator ', () => {
         [ 'date("2018-01-01" + 14)', '2018-01-15T00:00:00.000-07:00', 'datetime' ],
         [ 'date("2018-10-35")', '', 'date' ]
     ].forEach( test => {
-        it( `are recognized and converted, if necessary by the type convertor: ${test[ 0 ]}`, () => {
+        it( `are recognized and converted, if necessary by the type convertor: ${test[ 0 ]} for type ${test[ 2 ]}`, () => {
             expect( model.types[ test[ 2 ] ].convert( model.evaluate( test[ 0 ], 'string' ) ) ).toEqual( test[ 1 ] );
         } );
     } );
