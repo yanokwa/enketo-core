@@ -66,6 +66,7 @@ document.querySelector( '#validate-form' ).addEventListener( 'click', () => {
 
 // initialize the form
 function initializeForm() {
+    console.time( 'load' );
     const formEl = document.querySelector( 'form.or' );
     form = new Form( formEl, {
         modelStr: modelStr
@@ -76,6 +77,7 @@ function initializeForm() {
     window.form = form;
     //initialize form and check for load errors
     const loadErrors = form.init();
+    console.timeEnd( 'load' );
     if ( loadErrors.length > 0 ) {
         window.alert( 'loadErrors: ' + loadErrors.join( ', ' ) );
     }
