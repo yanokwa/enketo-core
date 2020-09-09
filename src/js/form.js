@@ -1,6 +1,6 @@
 import { FormModel } from './form-model';
 import $ from 'jquery';
-import { toArray, parseFunctionFromExpression, stripQuotes, getFilename, joinPath } from './utils';
+import { parseFunctionFromExpression, stripQuotes, getFilename, joinPath } from './utils';
 import { getXPath, closestAncestorUntil, getSiblingElements } from './dom-utils';
 import { t } from 'enketo/translator';
 import config from 'enketo/config';
@@ -297,7 +297,6 @@ Form.prototype.init = function() {
         this.options.input = this.input;
         this.options.pathToAbsolute = this.pathToAbsolute.bind( this );
         this.options.evaluate = this.model.evaluate.bind( this.model );
-        this.options.formClasses = toArray( this.view.html.classList );
         this.options.getModelValue = this.getModelValue.bind( this );
         this.widgetsInitialized = this.widgets.init( null, this.options );
 
