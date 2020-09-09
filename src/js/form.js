@@ -161,16 +161,20 @@ Form.prototype = {
         return this.view.html.id;
     },
     /**
+     * To facilitate forks that support multiple constraints per question
+     *
      * @type {Array<string>}
      */
     get constraintClassesInvalid() {
-        return Form.constraintNames.map( n => `.invalid-${n}` );
+        return [ '.invalid-constraint' ];
     },
     /**
+     * To facilitate forks that support multiple constraints per question
+     *
      * @type {Array<string>}
      */
     get constraintAttributes() {
-        return Form.constraintNames.map( n => `data-${n}` );
+        return [ 'data-constraint' ];
     },
     /**
      * @type {Array<string>}
@@ -1167,13 +1171,5 @@ Form.prototype.goToTarget = function( target ) {
  * @default
  */
 Form.requiredTransformerVersion = '1.41.1';
-
-/**
- * Static property with supported constraint names (for custom solutions that allow multiple constraints).
- *
- * @type {string}
- * @default
- */
-Form.constraintNames = [ 'constraint' ];
 
 export { Form, FormModel };
