@@ -116,66 +116,86 @@ function isGrid() {
  * @return {Promise} Promise that resolves with undefined
  */
 function fixGrid( paper ) {
-    const mutationsComplete = _mutationsComplete();
+    const mutationsTracker = new MutationsTracker();
+
     // to ensure cells grow correctly with text-wrapping before fixing heights and widths.
     const main = document.querySelector( '.main' );
+    const cls = 'print-width-adjusted';
+    const classChange = mutationsTracker.waitForClassChange( main, cls );
     main.style.width = getPaperPixelWidth( paper );
-    main.classList.add( 'print-width-adjusted' );
+    main.classList.add( cls );
 
-    let row = [];
-    let rowTop;
-    const title = document.querySelector( '#form-title' );
-    // the -1px adjustment is necessary because the h3 element width is calc(100% + 1px)
-    const maxWidth = title ? title.offsetWidth - 1 : null;
-    const els = document.querySelectorAll( '.question:not(.draft), .trigger:not(.draft)' );
+    // wait for browser repainting after width change
+    return classChange
+        .then( () => {
+            let row = [];
+            let rowTop;
+            const title = document.querySelector( '#form-title' );
+            // the -1px adjustment is necessary because the h3 element width is calc(100% + 1px)
+            const maxWidth = title ? title.offsetWidth - 1 : null;
+            const els = document.querySelectorAll( '.question:not(.draft), .trigger:not(.draft)' );
 
-    els.forEach( ( el, index ) => {
-        const lastElement = index === els.length - 1;
-        const top = $( el ).offset().top;
-        rowTop = ( rowTop || rowTop === 0 ) ? rowTop : top;
+            els.forEach( ( el, index ) => {
+                const lastElement = index === els.length - 1;
+                const top = $( el ).offset().top;
+                rowTop = ( rowTop || rowTop === 0 ) ? rowTop : top;
 
-        if ( top === rowTop ) {
-            row = row.concat( el );
-        }
+                if ( top === rowTop ) {
+                    row = row.concat( el );
+                }
 
-        // If an element is hidden, top = 0. We still need to trigger a resize on the very last row
-        // if the last element is hidden, so this is placed outside of the previous if statement
-        if ( lastElement ) {
-            _resizeRowElements( row, maxWidth );
-        }
+                // If an element is hidden, top = 0. We still need to trigger a resize on the very last row
+                // if the last element is hidden, so this is placed outside of the previous if statement
+                if ( lastElement ) {
+                    _resizeRowElements( row, maxWidth );
+                }
 
-        // process row, and start a new row
-        if ( top > rowTop ) {
-            _resizeRowElements( row, maxWidth );
+                // process row, and start a new row
+                if ( top > rowTop ) {
+                    _resizeRowElements( row, maxWidth );
 
-            if ( lastElement && !row.includes( el ) ) {
-                _resizeRowElements( [ el ], maxWidth );
-            } else {
-                // start a new row
-                row = [ el ];
-                rowTop = $( el ).offset().top;
-            }
+                    if ( lastElement && !row.includes( el ) ) {
+                        _resizeRowElements( [ el ], maxWidth );
+                    } else {
+                        // start a new row
+                        row = [ el ];
+                        rowTop = $( el ).offset().top;
+                    }
 
-        } else if ( rowTop < top ) {
-            console.error( 'unexpected question top position: ', top, 'for element:', el, 'expected >=', rowTop );
-        }
-    } );
+                } else if ( rowTop < top ) {
+                    console.error( 'unexpected question top position: ', top, 'for element:', el, 'expected >=', rowTop );
+                }
+            } );
 
-    return mutationsComplete;
+            return mutationsTracker.completed();
+        } );
 }
 
-function _mutationsComplete(){
-    return new Promise( resolve => {
+class MutationsTracker{
+
+    constructor( el = document.documentElement ){
         let mutations = 0;
-        const mutationObserver = new MutationObserver( function( mutations ) {
-            mutations.forEach( function( mutation ) {
+        this.classChanges = new WeakMap();
+
+        const mutationObserver = new MutationObserver(  mutations => {
+            mutations.forEach(  mutation => {
                 console.log( mutation );
                 mutations++;
+                if ( mutation.type === 'attributes' && mutation.attributeName === 'class' ){
+                    const trackedClasses = this.classChanges.get( mutation.target ) || [];
+                    trackedClasses.forEach( obj => {
+                        console.log( 'checking', obj, mutation.target.classList );
+                        if( mutation.target.classList.contains( obj.className ) ){
+                            obj.completed = true;
+                            this.classChanges.set( mutation.target, trackedClasses );
+                            console.log( 'set to completed', this.classChanges.get( mutation.target ) );
+                        }
+                    } );
+                }
             } );
         } );
 
-        // Starts listening for changes in the root HTML element of the page.
-        mutationObserver.observe( document.documentElement, {
+        mutationObserver.observe( el, {
             attributes: true,
             characterData: true,
             childList: true,
@@ -185,19 +205,50 @@ function _mutationsComplete(){
         } );
 
         let previousMutations = mutations;
+
         const checkInterval = setInterval( () => {
             console.log( 'checking' );
             if ( previousMutations === mutations ){
+                this.completed = true;
                 mutationObserver.disconnect();
                 clearInterval( checkInterval );
                 // In case anybody is using this (historic) event.
                 window.dispatchEvent( new CustomEvent( 'printviewready' ) );
-                resolve();
+                //resolve();
             } else {
                 previousMutations = mutations;
             }
         }, 100 );
-    } );
+    }
+
+    _resolveWhenTrue( fn ){
+        return new Promise( resolve => {
+            const checkInterval = setInterval( () => {
+                if ( fn.call( this ) ){
+                    clearInterval( checkInterval );
+                    resolve();
+                }
+            }, 10 );
+        } );
+    }
+
+    waitForClassChange( element, className ){
+        if ( !this.classChanges.has( element ) ) {
+            this.classChanges.set( element, [ { className } ] );
+        } else {
+            const current = this.classChanges.get( element );
+            if ( !current.some( obj => obj.className === className ) ){
+                this.classChanges.set( element, current.push( { className } ) );
+            }
+        }
+
+        return this._resolveWhenTrue( () => this.classChanges.get( element ).find( obj => obj.className === className ).completed );
+    }
+
+    completed(){
+        return this._resolveWhenTrue( () => this.completed );
+    }
+
 }
 
 /**
