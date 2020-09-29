@@ -175,6 +175,7 @@ class MutationsTracker{
 
     constructor( el = document.documentElement ){
         let mutations = 0;
+        let previousMutations = mutations;
         this.classChanges = new WeakMap();
         this.quiet = true;
 
@@ -201,8 +202,6 @@ class MutationsTracker{
             attributeOldValue: true,
             characterDataOldValue: true
         } );
-
-        let previousMutations = mutations;
 
         const checkInterval = setInterval( () => {
             if ( previousMutations === mutations ){
@@ -232,13 +231,11 @@ class MutationsTracker{
     }
 
     waitForClassChange( element, className ){
-        if ( !this.classChanges.has( element ) ) {
-            this.classChanges.set( element, [ { className } ] );
-        } else {
-            const current = this.classChanges.get( element );
-            if ( !current.some( obj => obj.className === className ) ){
-                this.classChanges.set( element, current.push( { className } ) );
-            }
+        const trackedClasses = this.classChanges.get( element ) || [];
+
+        if ( !trackedClasses.some( obj => obj.className === className ) ){
+            trackedClasses.push( { className } );
+            this.classChanges.set( element, trackedClasses );
         }
 
         return this._resolveWhenTrue( () => this.classChanges.get( element ).find( obj => obj.className === className ).completed );
