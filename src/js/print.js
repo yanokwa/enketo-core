@@ -179,16 +179,13 @@ class MutationsTracker{
 
         const mutationObserver = new MutationObserver(  mutations => {
             mutations.forEach(  mutation => {
-                console.log( mutation );
                 mutations++;
                 if ( mutation.type === 'attributes' && mutation.attributeName === 'class' ){
                     const trackedClasses = this.classChanges.get( mutation.target ) || [];
                     trackedClasses.forEach( obj => {
-                        console.log( 'checking', obj, mutation.target.classList );
                         if( mutation.target.classList.contains( obj.className ) ){
                             obj.completed = true;
                             this.classChanges.set( mutation.target, trackedClasses );
-                            console.log( 'set to completed', this.classChanges.get( mutation.target ) );
                         }
                     } );
                 }
@@ -207,7 +204,6 @@ class MutationsTracker{
         let previousMutations = mutations;
 
         const checkInterval = setInterval( () => {
-            console.log( 'checking' );
             if ( previousMutations === mutations ){
                 this.completed = true;
                 mutationObserver.disconnect();
@@ -218,10 +214,14 @@ class MutationsTracker{
             } else {
                 previousMutations = mutations;
             }
-        }, 100 );
+        }, 50 );
     }
 
     _resolveWhenTrue( fn ){
+        if ( typeof fn !== 'function' ){
+            return Promise.reject();
+        }
+
         return new Promise( resolve => {
             const checkInterval = setInterval( () => {
                 if ( fn.call( this ) ){
