@@ -113,61 +113,90 @@ function isGrid() {
  *
  * @static
  * @param {PaperObj} paper - paper format
- * @param {number} [delay] - delay in milliseconds, before starting the job.
  * @return {Promise} Promise that resolves with undefined
  */
-function fixGrid( paper, delay = 0 ) {
+function fixGrid( paper ) {
+    const mutationsComplete = _mutationsComplete();
     // to ensure cells grow correctly with text-wrapping before fixing heights and widths.
     const main = document.querySelector( '.main' );
     main.style.width = getPaperPixelWidth( paper );
     main.classList.add( 'print-width-adjusted' );
 
-    // wait for browser repainting after width change
+    let row = [];
+    let rowTop;
+    const title = document.querySelector( '#form-title' );
+    // the -1px adjustment is necessary because the h3 element width is calc(100% + 1px)
+    const maxWidth = title ? title.offsetWidth - 1 : null;
+    const els = document.querySelectorAll( '.question:not(.draft), .trigger:not(.draft)' );
+
+    els.forEach( ( el, index ) => {
+        const lastElement = index === els.length - 1;
+        const top = $( el ).offset().top;
+        rowTop = ( rowTop || rowTop === 0 ) ? rowTop : top;
+
+        if ( top === rowTop ) {
+            row = row.concat( el );
+        }
+
+        // If an element is hidden, top = 0. We still need to trigger a resize on the very last row
+        // if the last element is hidden, so this is placed outside of the previous if statement
+        if ( lastElement ) {
+            _resizeRowElements( row, maxWidth );
+        }
+
+        // process row, and start a new row
+        if ( top > rowTop ) {
+            _resizeRowElements( row, maxWidth );
+
+            if ( lastElement && !row.includes( el ) ) {
+                _resizeRowElements( [ el ], maxWidth );
+            } else {
+                // start a new row
+                row = [ el ];
+                rowTop = $( el ).offset().top;
+            }
+
+        } else if ( rowTop < top ) {
+            console.error( 'unexpected question top position: ', top, 'for element:', el, 'expected >=', rowTop );
+        }
+    } );
+
+    return mutationsComplete;
+}
+
+function _mutationsComplete(){
     return new Promise( resolve => {
-        setTimeout( () => {
-            let row = [];
-            let rowTop;
-            const title = document.querySelector( '#form-title' );
-            // the -1px adjustment is necessary because the h3 element width is calc(100% + 1px)
-            const maxWidth = title ? title.offsetWidth - 1 : null;
-            const els = document.querySelectorAll( '.question:not(.draft), .trigger:not(.draft)' );
-
-            els.forEach( ( el, index ) => {
-                const lastElement = index === els.length - 1;
-                const top = $( el ).offset().top;
-                rowTop = ( rowTop || rowTop === 0 ) ? rowTop : top;
-
-                if ( top === rowTop ) {
-                    row = row.concat( el );
-                }
-
-                // If an element is hidden, top = 0. We still need to trigger a resize on the very last row
-                // if the last element is hidden, so this is placed outside of the previous if statement
-                if ( lastElement ) {
-                    _resizeRowElements( row, maxWidth );
-                }
-
-                // process row, and start a new row
-                if ( top > rowTop ) {
-                    _resizeRowElements( row, maxWidth );
-
-                    if ( lastElement && !row.includes( el ) ) {
-                        _resizeRowElements( [ el ], maxWidth );
-                    } else {
-                        // start a new row
-                        row = [ el ];
-                        rowTop = $( el ).offset().top;
-                    }
-
-                } else if ( rowTop < top ) {
-                    console.error( 'unexpected question top position: ', top, 'for element:', el, 'expected >=', rowTop );
-                }
+        let mutations = 0;
+        const mutationObserver = new MutationObserver( function( mutations ) {
+            mutations.forEach( function( mutation ) {
+                console.log( mutation );
+                mutations++;
             } );
+        } );
 
-            // In case anybody is using this event.
-            window.dispatchEvent( new CustomEvent( 'printviewready' ) );
-            resolve();
-        }, delay );
+        // Starts listening for changes in the root HTML element of the page.
+        mutationObserver.observe( document.documentElement, {
+            attributes: true,
+            characterData: true,
+            childList: true,
+            subtree: true,
+            attributeOldValue: true,
+            characterDataOldValue: true
+        } );
+
+        let previousMutations = mutations;
+        const checkInterval = setInterval( () => {
+            console.log( 'checking' );
+            if ( previousMutations === mutations ){
+                mutationObserver.disconnect();
+                clearInterval( checkInterval );
+                // In case anybody is using this (historic) event.
+                window.dispatchEvent( new CustomEvent( 'printviewready' ) );
+                resolve();
+            } else {
+                previousMutations = mutations;
+            }
+        }, 100 );
     } );
 }
 
