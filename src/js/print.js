@@ -167,7 +167,7 @@ function fixGrid( paper ) {
                 }
             } );
 
-            return mutationsTracker.completed();
+            return mutationsTracker.waitForQuietness();
         } );
 }
 
@@ -176,6 +176,7 @@ class MutationsTracker{
     constructor( el = document.documentElement ){
         let mutations = 0;
         this.classChanges = new WeakMap();
+        this.quiet = true;
 
         const mutationObserver = new MutationObserver(  mutations => {
             mutations.forEach(  mutation => {
@@ -205,16 +206,14 @@ class MutationsTracker{
 
         const checkInterval = setInterval( () => {
             if ( previousMutations === mutations ){
-                this.completed = true;
+                this.quiet = true;
                 mutationObserver.disconnect();
                 clearInterval( checkInterval );
-                // In case anybody is using this (historic) event.
-                window.dispatchEvent( new CustomEvent( 'printviewready' ) );
-                //resolve();
             } else {
+                this.quiet = false;
                 previousMutations = mutations;
             }
-        }, 50 );
+        }, 100 );
     }
 
     _resolveWhenTrue( fn ){
@@ -245,8 +244,8 @@ class MutationsTracker{
         return this._resolveWhenTrue( () => this.classChanges.get( element ).find( obj => obj.className === className ).completed );
     }
 
-    completed(){
-        return this._resolveWhenTrue( () => this.completed );
+    waitForQuietness(){
+        return this._resolveWhenTrue( () => this.quiet );
     }
 
 }
