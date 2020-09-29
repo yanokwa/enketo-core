@@ -113,9 +113,10 @@ function isGrid() {
  *
  * @static
  * @param {PaperObj} paper - paper format
+ * @param {number} [delay] - delay in milliseconds, before starting the job.
  * @return {Promise} Promise that resolves with undefined
  */
-function fixGrid( paper ) {
+function fixGrid( paper, delay = 1000 ) {
     const mutationsTracker = new MutationsTracker();
 
     // to ensure cells grow correctly with text-wrapping before fixing heights and widths.
@@ -167,7 +168,12 @@ function fixGrid( paper ) {
                 }
             } );
 
-            return mutationsTracker.waitForQuietness();
+            return mutationsTracker.waitForQuietness()
+                .then( () => {
+                    // The need for this delay is unfortunate, but at least the mutationTracker will increase
+                    // the painting time for larger forms (more mutations).
+                    return new Promise( resolve => setTimeout( resolve, delay ) );
+                } );
         } );
 }
 
