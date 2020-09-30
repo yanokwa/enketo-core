@@ -5,6 +5,7 @@
  */
 
 import $ from 'jquery';
+import { MutationsTracker } from './dom-utils';
 
 let dpi, printStyleSheet;
 let printStyleSheetLink;
@@ -113,10 +114,10 @@ function isGrid() {
  *
  * @static
  * @param {PaperObj} paper - paper format
- * @param {number} [delay] - delay in milliseconds, before starting the job.
+ * @param {number} [delay] - delay in milliseconds, to wait for re-painting to finish.
  * @return {Promise} Promise that resolves with undefined
  */
-function fixGrid( paper, delay = 1000 ) {
+function fixGrid( paper, delay = 500 ) {
     const mutationsTracker = new MutationsTracker();
 
     // to ensure cells grow correctly with text-wrapping before fixing heights and widths.
@@ -127,6 +128,7 @@ function fixGrid( paper, delay = 1000 ) {
     main.classList.add( cls );
 
     // wait for browser repainting after width change
+    // TODO: may not work, may need to add delay
     return classChange
         .then( () => {
             let row = [];
@@ -170,87 +172,11 @@ function fixGrid( paper, delay = 1000 ) {
 
             return mutationsTracker.waitForQuietness()
                 .then( () => {
-                    // The need for this delay is unfortunate, but at least the mutationTracker will increase
-                    // the painting time for larger forms (more mutations).
+                    // The need for this 'dumb' delay is unfortunate, but at least the mutationTracker will smartly increase
+                    // the waiting time for larger forms (more mutations).
                     return new Promise( resolve => setTimeout( resolve, delay ) );
                 } );
         } );
-}
-
-class MutationsTracker{
-
-    constructor( el = document.documentElement ){
-        let mutations = 0;
-        let previousMutations = mutations;
-        this.classChanges = new WeakMap();
-        this.quiet = true;
-
-        const mutationObserver = new MutationObserver(  mutations => {
-            mutations.forEach(  mutation => {
-                mutations++;
-                if ( mutation.type === 'attributes' && mutation.attributeName === 'class' ){
-                    const trackedClasses = this.classChanges.get( mutation.target ) || [];
-                    trackedClasses.forEach( obj => {
-                        if( mutation.target.classList.contains( obj.className ) ){
-                            obj.completed = true;
-                            this.classChanges.set( mutation.target, trackedClasses );
-                        }
-                    } );
-                }
-            } );
-        } );
-
-        mutationObserver.observe( el, {
-            attributes: true,
-            characterData: true,
-            childList: true,
-            subtree: true,
-            attributeOldValue: true,
-            characterDataOldValue: true
-        } );
-
-        const checkInterval = setInterval( () => {
-            if ( previousMutations === mutations ){
-                this.quiet = true;
-                mutationObserver.disconnect();
-                clearInterval( checkInterval );
-            } else {
-                this.quiet = false;
-                previousMutations = mutations;
-            }
-        }, 100 );
-    }
-
-    _resolveWhenTrue( fn ){
-        if ( typeof fn !== 'function' ){
-            return Promise.reject();
-        }
-
-        return new Promise( resolve => {
-            const checkInterval = setInterval( () => {
-                if ( fn.call( this ) ){
-                    clearInterval( checkInterval );
-                    resolve();
-                }
-            }, 10 );
-        } );
-    }
-
-    waitForClassChange( element, className ){
-        const trackedClasses = this.classChanges.get( element ) || [];
-
-        if ( !trackedClasses.some( obj => obj.className === className ) ){
-            trackedClasses.push( { className } );
-            this.classChanges.set( element, trackedClasses );
-        }
-
-        return this._resolveWhenTrue( () => this.classChanges.get( element ).find( obj => obj.className === className ).completed );
-    }
-
-    waitForQuietness(){
-        return this._resolveWhenTrue( () => this.quiet );
-    }
-
 }
 
 /**
