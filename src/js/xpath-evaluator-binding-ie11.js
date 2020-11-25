@@ -1,13 +1,11 @@
-import OpenRosaXPath from 'openrosa-xpath-evaluator';
-
-// This file is separated so it can be easily overwritten (with a different evaluator that works in IE11).
+import XPathJS from 'enketo-xpathjs';
 
 /**
  * @function xpath-evaluator-binding
  * @param {Function} addExtensions - extension function
  */
 export default function( addExtensions ) {
-    const evaluator = OpenRosaXPath();
+    const evaluator = new XPathJS.XPathEvaluator();
 
     /*
      * Note: it's inefficient to extend XPathJS here (for every model instance)
@@ -23,8 +21,27 @@ export default function( addExtensions ) {
      * and leave the addExtensions parameter empty here.
      */
     if ( typeof addExtensions === 'function' ) {
-        addExtensions( evaluator );
+        addExtensions( XPathJS );
     }
 
-    this.xml.jsEvaluate = evaluator.evaluate;
+    XPathJS.bindDomLevel3XPath( this.xml, {
+        'window': {
+            JsXPathException: true,
+            JsXPathExpression: true,
+            JsXPathNSResolver: true,
+            JsXPathResult: true,
+            JsXPathNamespace: true
+        },
+        'document': {
+            jsCreateExpression( ...args ) {
+                return evaluator.createExpression( ...args );
+            },
+            jsCreateNSResolver( ...args ) {
+                return evaluator.createNSResolver( ...args );
+            },
+            jsEvaluate( ...args ) {
+                return evaluator.evaluate( ...args );
+            }
+        }
+    } );
 }
