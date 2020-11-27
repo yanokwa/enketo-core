@@ -88,7 +88,8 @@
         "enketo/widgets": "./src/js/widgets.js",
         "enketo/translator": "./src/js/fake-translator",
         "enketo/dialog": "./src/js/fake-dialog",
-        "enketo/file-manager": "./src/js/file-manager"
+        "enketo/file-manager": "./src/js/file-manager",
+        "enketo/xpath-evaluator-binding": "./src/js/xpath-evaluator-binding"
     },
     "dependencies": {
         "bootstrap-datepicker": "1.9.x",
