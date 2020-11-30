@@ -100,7 +100,7 @@
         "leaflet-draw": "github:enketo/Leaflet.draw#ff73078",
         "leaflet.gridlayer.googlemutant": "0.9.x",
         "mergexml": "1.2.1",
-        "openrosa-xpath-evaluator": "alxndrsn/openrosa-xpath-evaluator#a8886e3",
+        "openrosa-xpath-evaluator": "alxndrsn/openrosa-xpath-evaluator#ca8cb45",
         "signature_pad": "2.3.x"
     }
 }
