@@ -4,7 +4,6 @@
  * @description Updates branches
  */
 
-import $ from 'jquery';
 import events from './event';
 import { closestAncestorUntil, getChildren } from './dom-utils';
 
@@ -236,7 +235,7 @@ export default {
     clear( branchNode, path ) {
         // A change event ensures the model is updated
         // An inputupdate event is required to update widgets
-        $( branchNode ).clearInputs( events.Change().type, events.InputUpdate().type );
+        this.form.input.clear( branchNode, events.Change(), events.InputUpdate() );
         // Update calculated items if branch is a group
         // We exclude question branches here because those will have been cleared already in the previous line.
         if ( branchNode.matches( '.or-group, .or-group-data' ) ) {
