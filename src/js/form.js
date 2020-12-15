@@ -21,6 +21,7 @@ import maskModule from './mask';
 import readonlyModule from './readonly';
 import FormLogicError from './form-logic-error';
 import events from './event';
+import './plugins';
 import './extend';
 
 /**
