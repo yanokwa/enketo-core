@@ -7,6 +7,8 @@
 import $ from 'jquery';
 import events from './event';
 
+// TODO: remove jquery
+
 export default {
     /**
      * @param {UpdatedDataNodes} [updated] - The object containing info on updated data nodes.
@@ -233,12 +235,8 @@ export default {
 
         if ( neverEnabled || this.selfRelevant( $branchNode ) || forceClearNonRelevant ) {
             changed = true;
-            // If the branch was never previously enabled, keep any default values (unless forced)
-            if ( !neverEnabled && forceClearNonRelevant ) {
-                console.log( 'going to clear', !neverEnabled, forceClearNonRelevant );
+            if ( forceClearNonRelevant ) {
                 this.clear( $branchNode, path );
-            } else {
-                //$branchNode.removeClass( 'pre-init' );
             }
 
             this.deactivate( $branchNode );
