@@ -12,8 +12,9 @@ export default {
      *
      * @param {UpdatedDataNodes} updated - the object containing info on updated data nodes
      * @param {string} [filter] - CSS selector filter.
+     * @param ignoreRelevance
      */
-    update( updated = {}, filter = '' ) {
+    update( updated = {}, filter = '', ignoreRelevance = true ) {
         let nodes;
 
         if ( !this.form ) {
@@ -58,7 +59,7 @@ export default {
                     const dataNodeName = ( name.lastIndexOf( '/' ) !== -1 ) ? name.substring( name.lastIndexOf( '/' ) + 1 ) : name;
                     const dataNode = this.form.model.node( updated.repeatPath, updated.repeatIndex ).getElement().querySelector( dataNodeName );
                     props.index = dataNodes.indexOf( dataNode );
-                    this._updateCalc( control, props );
+                    this._updateCalc( control, props, ignoreRelevance );
                 } else if ( control.type === 'hidden' ) {
                     /*
                      * This case is the consequence of the  decision to place calculated items without a visible form control,
@@ -68,7 +69,7 @@ export default {
                     dataNodes.forEach( ( el, index ) => {
                         const obj = Object.create( props );
                         obj.index = index;
-                        this._updateCalc( control, obj );
+                        this._updateCalc( control, obj, ignoreRelevance );
                     } );
                 } else {
                     /*
@@ -78,11 +79,11 @@ export default {
                     const repeatSiblings = getSiblingElementsAndSelf( control.closest( '.or-repeat' ), '.or-repeat' );
                     if ( repeatSiblings.length === dataNodes.length ) {
                         props.index = repeatSiblings.indexOf( control.closest( '.or-repeat' ) );
-                        this._updateCalc( control, props );
+                        this._updateCalc( control, props, ignoreRelevance );
                     }
                 }
             } else if ( dataNodes.length === 1 ) {
-                this._updateCalc( control, props );
+                this._updateCalc( control, props, ignoreRelevance );
             }
 
         } );

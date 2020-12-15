@@ -262,7 +262,7 @@ export default {
         if ( $branchNode.is( '.or-group, .or-group-data' ) ) {
             this.form.calc.update( {
                 relevantPath: path
-            } );
+            }, '', false );
         }
     },
     /**
