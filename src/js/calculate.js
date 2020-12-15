@@ -167,7 +167,7 @@ export default {
         } );
     },
 
-    _updateCalc( control, props, ignoreRelevance = false ) {
+    _updateCalc( control, props, ignoreRelevance = true ) {
         let relevant = true;
 
         if ( !ignoreRelevance ) {
